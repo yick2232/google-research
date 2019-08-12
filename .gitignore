@@ -18,3 +18,8 @@ dist/
 
 # Other
 *.DS_Store
+
+bam/.idea/
+bam/glue_data/
+bam/models/
+bam/pretrained_models/
