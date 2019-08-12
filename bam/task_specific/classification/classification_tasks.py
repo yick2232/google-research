@@ -20,6 +20,7 @@ from __future__ import division
 from __future__ import print_function
 
 import abc
+import json
 import tensorflow as tf
 
 from bam.bert import tokenization
@@ -140,6 +141,8 @@ class SingleOutputTask(task.Task):
                  skip_first_line=False, eid_offset=0, swap=False):
     examples = []
     for (i, line) in enumerate(lines):
+      if len(line) != 3:
+        continue
       if i == 0 and skip_first_line:
         continue
       eid = i - (1 if skip_first_line else 0) + eid_offset
@@ -469,4 +472,19 @@ class STS(RegressionTask):
       if self.config.double_unordered and split == "train":
         examples += self._load_glue(
             lines, split, -3, -2, -1, True, offset, True)
+    return examples
+
+
+class XD(ClassificationTask):
+  """xiaoduo intent classifier"""
+
+  def __init__(self, config, tokenizer):
+    with open(config.label_file) as f:
+      label_list = json.load(f)
+    super(XD, self).__init__(config, "xd", tokenizer, label_list)
+
+  def _create_examples(self, lines, split):
+    examples = []
+    for _ in range(task_weighting.get_task_multiple(self, split)):
+      examples += self._load_glue(lines, split, 2, None, 0, False)
     return examples

@@ -328,7 +328,7 @@ def get_assignment_map_from_checkpoint(tvars, init_checkpoint):
     if m is not None:
       name = m.group(1)
     name_to_variable[name] = var
-
+  print(init_checkpoint)
   init_vars = tf.train.list_variables(init_checkpoint)
 
   assignment_map = collections.OrderedDict()

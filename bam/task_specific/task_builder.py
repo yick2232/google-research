@@ -49,5 +49,7 @@ def get_task(config, task_name, tokenizer):
     return classification_tasks.QQP(config, tokenizer)
   elif task_name == "sts":
     return classification_tasks.STS(config, tokenizer)
+  elif task_name == "xd":
+    return classification_tasks.XD(config, tokenizer)
   else:
     raise ValueError("Unknown task " + task_name)

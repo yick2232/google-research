@@ -25,7 +25,8 @@ import os
 class Config(object):
   """Hyperparameters for the model."""
 
-  def __init__(self, model_name, topdir, **kwargs):
+  def __init__(self, topdir, model_name, **kwargs):
+    print(topdir)
     # general
     self.model_name = model_name
     self.debug = False  # debug mode for quickly running things locally
@@ -41,7 +42,8 @@ class Config(object):
     # model
     self.task_names = ['rte', 'mrpc']  # which tasks to learn
     self.pretrained = True  # whether to use pre-trained weights
-    self.pretrained_model_name = 'uncased_L-12_H-768_A-12'
+    # self.pretrained_model_name = 'uncased_L-12_H-768_A-12'
+    self.pretrained_model_name = "pretrain_online_data"
     self.do_lower_case = True
     self.learning_rate = 1e-4
     self.weight_decay_rate = 0.01
@@ -121,6 +123,7 @@ class Config(object):
     self.results_txt = os.path.join(model_dir, 'results.txt')
     self.results_pkl = os.path.join(model_dir, 'results.pkl')
     self.preprocessed_data_dir = os.path.join(model_dir, 'tfrecords')
+    self.label_file = os.path.join(self.raw_data_dir(self.task_names[0]), "qid.json")
     self.test_outputs = os.path.join(
         model_dir, 'outputs', '{:}_{:}_predictions_{:}.pkl').format
     self.distill_outputs = os.path.join(
