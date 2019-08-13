@@ -271,7 +271,20 @@ class ClassificationTask(SingleOutputTask):
     if is_training:
       reprs = tf.nn.dropout(reprs, keep_prob=0.9)
 
-    logits = tf.layers.dense(reprs, num_labels)
+    hidden_size = reprs.shape[-1].value
+    output_weights = tf.get_variable(
+        "output_weights", [num_labels, hidden_size],
+        initializer=tf.truncated_normal_initializer(stddev=0.02))
+    output_bias = tf.get_variable(
+        "output_bias", [num_labels], initializer=tf.zeros_initializer())
+
+    with tf.variable_scope("loss"):
+      if is_training:
+        # I.e., 0.1 dropout
+        reprs = tf.nn.dropout(reprs, keep_prob=0.9)
+      logits = tf.matmul(reprs, output_weights, transpose_b=True)
+      logits = tf.nn.bias_add(logits, output_bias)
+    #logits = tf.layers.dense(reprs, num_labels)
     # probabilities = tf.nn.softmax(logits, axis=-1)
     log_probs = tf.nn.log_softmax(logits, axis=-1)
 
