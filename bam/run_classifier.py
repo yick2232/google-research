@@ -59,12 +59,18 @@ class MultitaskModel(object):
     # Add specific tasks
     self.outputs = {"task_id": features["task_id"]}
     losses = []
-    for task in tasks:
-      with tf.variable_scope("task_specific/" + task.name):
-        task_losses, task_outputs = task.get_prediction_module(
-            bert_model, features, is_training, percent_done)
-        losses.append(task_losses * task_weights[task.name])
-        self.outputs[task.name] = task_outputs
+    if len(tasks) == 1:
+      task_losses, task_outputs = tasks[0].get_prediction_module(
+          bert_model, features, is_training, percent_done)
+      losses.append(task_losses * task_weights[tasks[0].name])
+      self.outputs[tasks[0].name] = task_outputs
+    else:
+      for task in tasks:
+        with tf.variable_scope("task_specific/" + task.name):
+          task_losses, task_outputs = task.get_prediction_module(
+              bert_model, features, is_training, percent_done)
+          losses.append(task_losses * task_weights[task.name])
+          self.outputs[task.name] = task_outputs
 
     # For TPU-friendlyness inference for all tasks is performed on each example.
     # However, the losses from all tasks but the example's task are masked out.
