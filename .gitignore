@@ -22,4 +22,4 @@ dist/
 bam/.idea/
 bam/glue_data/
 bam/models/
-bam/pretrained_models/
+bam/pretrained_models

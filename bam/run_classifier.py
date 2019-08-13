@@ -237,7 +237,7 @@ def write_results(config, results):
 def main(_):
   topdir, model_name = sys.argv[-2:]  # pylint: disable=unbalanced-tuple-unpacking
   #hparams = '{"task_names":["xd"],"distill":true,"train_batch_size":64,"learning_rate":5e-5,"teachers":{"XD":"universal_raw_data_fine-tuning"}}'
-  hparams = '{"task_names":["xd"]}'
+  hparams = '{"task_names":["xd"], "distill": true, "teachers": {"xd": "xd-model"}}'
   config = configure.Config(topdir, model_name, **json.loads(hparams))
 
   # Setup for training
