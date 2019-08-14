@@ -63,8 +63,8 @@ class Config(object):
     # sizing
     self.max_seq_length = 128
     self.train_batch_size = 128
-    self.eval_batch_size = 8
-    self.predict_batch_size = 8
+    self.eval_batch_size = 128
+    self.predict_batch_size = 128
     self.double_unordered = True  # for tasks like paraphrase where sentence
                                   # order doesn't matter, train the model on
                                   # on both sentence orderings for each example

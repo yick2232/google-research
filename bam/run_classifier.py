@@ -22,6 +22,7 @@ from __future__ import print_function
 import collections
 import json
 import sys
+import time
 import tensorflow as tf
 
 from bam import configure
@@ -199,31 +200,25 @@ class ModelRunner(object):
     """Write model prediction to disk."""
     utils.log("Writing out predictions for", tasks, split)
     distill_input_fn, _, _ = self._preprocessor.prepare_predict(tasks, split)
-    results = self._estimator.predict(input_fn=distill_input_fn,
-                                      yield_single_examples=True)
+    predict_gen = self._estimator.predict(input_fn=distill_input_fn)
     # task name -> eid -> model-logits
-    logits = collections.defaultdict(dict)
-    for r in results:
-      if r["task_id"] != len(self._tasks):
-        r = utils.nest_dict(r, self._config.task_names)
-        task_name = self._config.task_names[r["task_id"]]
-        logits[task_name][r[task_name]["eid"]] = (
-            r[task_name]["logits"] if "logits" in r[task_name]
-            else r[task_name]["predictions"])
-    for task_name in logits:
-      utils.log("Pickling predictions for {:} {:} examples ({:})".format(
-          len(logits[task_name]), task_name, split))
-      if split == "train":
-        if trial <= self._config.n_writes_distill:
-          utils.write_pickle(
-              logits[task_name],
-              self._config.distill_outputs(task_name, trial))
-      else:
-        if trial <= self._config.n_writes_test:
-          utils.write_pickle(logits[task_name],
-                             self._config.test_outputs(
-                                 task_name, split, trial))
-
+    results = []
+    idx, t0 = 0, time.time()
+    for r in predict_gen:
+      results.append(r)
+      idx += 1
+      if idx % 10000 == 0:
+        utils.log("***progress: {}, cost_time: {}s***".format(idx, (time.time() - t0)))
+      if len(results) % 200000 == 0:
+        utils.log("write_pickle, idx: {}".format(idx))
+        utils.write_pickle(
+            results,
+            self._config.distill_outputs("xd", idx))
+        results = []
+    if len(results) != 0:
+      utils.write_pickle(
+          results,
+          self._config.distill_outputs("xd", idx))
 
 def write_results(config, results):
   """Write out evaluate metrics to disk."""
@@ -243,14 +238,15 @@ def write_results(config, results):
 def main(_):
   topdir, model_name = sys.argv[-2:]  # pylint: disable=unbalanced-tuple-unpacking
   #hparams = '{"task_names":["xd"],"distill":true,"train_batch_size":64,"learning_rate":5e-5,"teachers":{"XD":"universal_raw_data_fine-tuning"}}'
-  hparams = '{"task_names":["xd"], "distill": true, "teachers": {"xd": "xd-model"}}'
+  #hparams = '{"task_names":["xd"], "distill": true, "teachers": {"xd": "xd-model"}}'
+  hparams = '{"task_names":["xd"]}'
   config = configure.Config(topdir, model_name, **json.loads(hparams))
 
   # Setup for training
   tasks = task_builder.get_tasks(config)
   results = []
   trial = 1
-  utils.rmkdir(config.checkpoints_dir)
+  #utils.rmkdir(config.checkpoints_dir)
   heading_info = "model={:}, trial {:}/{:}".format(
       config.model_name, trial, config.num_trials)
   heading = lambda msg: utils.heading(msg + ": " + heading_info)
@@ -276,7 +272,7 @@ def main(_):
           for split in task.get_test_splits():
             model_runner.write_outputs([task], trial, split)
 
-    utils.rmkdir(config.checkpoints_dir)
+    #utils.rmkdir(config.checkpoints_dir)
     trial += 1
 
 
