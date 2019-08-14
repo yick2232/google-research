@@ -131,10 +131,10 @@ class Config(object):
 
     # if doing distillation, where to load teacher targets from
     if self.teachers:
-      def get_distill_inputs(task):
+      def get_distill_inputs(task, eid):
         return os.path.join(topdir, 'models', '{:}', 'outputs',
-                            '{:}_train_predictions_1.pkl').format(
-                                self.teachers[task], task)
+                            '{:}_train_predictions_{:}.pkl').format(
+                                self.teachers[task], task, eid)
 
       self.distill_inputs = get_distill_inputs
     else:
