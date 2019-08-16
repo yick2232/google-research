@@ -56,8 +56,8 @@ class Config(object):
     # knowledge distillation;
     self.distill = False  # whether to do knowledge distillation
     self.teachers = {}  # {task: the model providing distill targets}
-    self.teacher_annealing = True  # whether to do teacher annealing
-    self.distill_weight = 0.5  # if no teacher annealing, how much weight to
+    self.teacher_annealing = False # whether to do teacher annealing
+    self.distill_weight = 1  # if no teacher annealing, how much weight to
                                # put on distill targets vs gold-standard label
 
     # sizing
@@ -73,7 +73,7 @@ class Config(object):
 
     # training
     self.save_checkpoints_steps = 2000
-    self.iterations_per_loop = 100
+    self.iterations_per_loop = 1000
     self.use_tfrecords_if_existing = True  # don't make tfrecords and write them
                                            # to disk if existing ones are found
 
@@ -92,7 +92,7 @@ class Config(object):
     if self.n_tasks == 1:
       self.dataset_multiples = False
       self.train_batch_size = 32
-      self.num_train_epochs = 3.0
+      self.num_train_epochs = 1.0
       self.learning_rate = 5e-5
 
     # debug-mode settings
@@ -111,8 +111,9 @@ class Config(object):
     self.raw_data_dir = os.path.join(topdir, 'glue_data/{:}').format
 
     # where BERT files are
-    bert_dir = os.path.join(topdir, 'pretrained_models',
-                            self.pretrained_model_name)
+    #bert_dir = os.path.join(topdir, 'pretrained_models',
+    #                        self.pretrained_model_name)
+    bert_dir = os.path.join(topdir, "models", "xd-model-distill", "bert")
     self.bert_config_file = os.path.join(bert_dir, 'bert_config.json')
     self.vocab_file = os.path.join(bert_dir, 'vocab.txt')
     self.init_checkpoint = os.path.join(bert_dir, 'bert_model.ckpt')

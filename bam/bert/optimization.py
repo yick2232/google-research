@@ -207,7 +207,7 @@ class AdamWeightDecayOptimizer(tf.train.Optimizer):
 
 def get_key_to_depths(n_layers):
   key_to_depths = {
-      "task_specific/": n_layers + 2,
+      "output_": n_layers + 2,
       "/pooler/": n_layers + 1,
       "/embeddings/": 0
   }

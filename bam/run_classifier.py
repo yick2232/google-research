@@ -96,16 +96,16 @@ def model_fn_builder(config, tasks, task_weights, num_train_steps):
     # Load pre-trained weights from checkpoint
     tvars = tf.trainable_variables()
     scaffold_fn = None
-    if not config.debug:
-      assignment_map, _ = modeling.get_assignment_map_from_checkpoint(
-          tvars, config.init_checkpoint)
-      if config.use_tpu:
-        def tpu_scaffold():
-          tf.train.init_from_checkpoint(config.init_checkpoint, assignment_map)
-          return tf.train.Scaffold()
-        scaffold_fn = tpu_scaffold
-      else:
-        tf.train.init_from_checkpoint(config.init_checkpoint, assignment_map)
+    #if not config.debug:
+    #  assignment_map, _ = modeling.get_assignment_map_from_checkpoint(
+    #      tvars, config.init_checkpoint)
+    #  if config.use_tpu:
+    #    def tpu_scaffold():
+    #      tf.train.init_from_checkpoint(config.init_checkpoint, assignment_map)
+    #      return tf.train.Scaffold()
+    #    scaffold_fn = tpu_scaffold
+    #  else:
+    #    tf.train.init_from_checkpoint(config.init_checkpoint, assignment_map)
 
     # Run training or prediction
     if mode == tf.estimator.ModeKeys.TRAIN:
@@ -146,6 +146,7 @@ class ModelRunner(object):
       tpu_cluster_resolver = tf.contrib.cluster_resolver.TPUClusterResolver(
           config.tpu_name, zone=config.tpu_zone, project=config.gcp_project)
     run_config = tf.contrib.tpu.RunConfig(
+        keep_checkpoint_max=10,
         cluster=tpu_cluster_resolver,
         model_dir=config.checkpoints_dir,
         save_checkpoints_steps=config.save_checkpoints_steps,
@@ -238,8 +239,8 @@ def write_results(config, results):
 def main(_):
   topdir, model_name = sys.argv[-2:]  # pylint: disable=unbalanced-tuple-unpacking
   #hparams = '{"task_names":["xd"],"distill":true,"train_batch_size":64,"learning_rate":5e-5,"teachers":{"XD":"universal_raw_data_fine-tuning"}}'
-  #hparams = '{"task_names":["xd"], "distill": true, "teachers": {"xd": "xd-model"}}'
-  hparams = '{"task_names":["xd"]}'
+  hparams = '{"task_names":["xd"], "distill": true, "teachers": {"xd": "xd-model"}}'
+  #hparams = '{"task_names":["xd"]}'
   config = configure.Config(topdir, model_name, **json.loads(hparams))
 
   # Setup for training
