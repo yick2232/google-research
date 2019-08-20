@@ -154,7 +154,12 @@ class ModelRunner(object):
         tpu_config=tf.contrib.tpu.TPUConfig(
             iterations_per_loop=config.iterations_per_loop,
             num_shards=config.num_tpu_cores,
-            per_host_input_for_training=is_per_host))
+            per_host_input_for_training=is_per_host
+        ),
+        session_config=tf.ConfigProto(
+            gpu_options=tf.GPUOptions(allow_growth=True)
+        )
+    )
 
     (self._train_input_fn, self.train_steps,
      sizes) = self._preprocessor.prepare_train()
@@ -172,7 +177,8 @@ class ModelRunner(object):
         config=run_config,
         train_batch_size=config.train_batch_size,
         eval_batch_size=config.eval_batch_size,
-        predict_batch_size=config.predict_batch_size)
+        predict_batch_size=config.predict_batch_size,
+    )
 
   def train(self):
     utils.log("Training for {:} steps".format(self.train_steps))
