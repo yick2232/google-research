@@ -146,7 +146,7 @@ class ModelRunner(object):
       tpu_cluster_resolver = tf.contrib.cluster_resolver.TPUClusterResolver(
           config.tpu_name, zone=config.tpu_zone, project=config.gcp_project)
     run_config = tf.contrib.tpu.RunConfig(
-        keep_checkpoint_max=10,
+        keep_checkpoint_max=30,
         cluster=tpu_cluster_resolver,
         model_dir=config.checkpoints_dir,
         save_checkpoints_steps=config.save_checkpoints_steps,
