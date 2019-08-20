@@ -73,7 +73,7 @@ class Config(object):
 
     # training
     self.save_checkpoints_steps = 2000
-    self.iterations_per_loop = 1000
+    self.iterations_per_loop = 2000
     self.use_tfrecords_if_existing = True  # don't make tfrecords and write them
                                            # to disk if existing ones are found
 
