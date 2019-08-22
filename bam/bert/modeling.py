@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2018 The Google AI Language Team Authors.
+# Copyright 2019 The Google Research Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 """The main BERT model and related functions."""
 
 from __future__ import absolute_import
@@ -23,7 +24,6 @@ import copy
 import json
 import math
 import re
-import numpy as np
 import six
 import tensorflow as tf
 
@@ -134,7 +134,7 @@ class BertModel(object):
                input_ids,
                input_mask=None,
                token_type_ids=None,
-               use_one_hot_embeddings=False,
+               use_one_hot_embeddings=True,
                scope=None):
     """Constructor for BertModel.
 
@@ -146,7 +146,9 @@ class BertModel(object):
       input_mask: (optional) int32 Tensor of shape [batch_size, seq_length].
       token_type_ids: (optional) int32 Tensor of shape [batch_size, seq_length].
       use_one_hot_embeddings: (optional) bool. Whether to use one-hot word
-        embeddings or tf.embedding_lookup() for the word embeddings.
+        embeddings or tf.embedding_lookup() for the word embeddings. On the TPU,
+        it is much faster if this is True, on the CPU or GPU, it is faster if
+        this is False.
       scope: (optional) variable scope. Defaults to "bert".
 
     Raises:
@@ -230,17 +232,6 @@ class BertModel(object):
             config.hidden_size,
             activation=tf.tanh,
             kernel_initializer=create_initializer(config.initializer_range))
-      # calculate on GPU
-      self.last_hidden = tf.reduce_max(self.all_encoder_layers[-1], axis=1)
-      lst = [
-        tf.reduce_max(self.all_encoder_layers[idx], axis=1)
-        for idx in [-1, -2, -3, -4]
-      ]
-      self.last_four_hidden = tf.concat(lst, axis=1)
-      lst = [
-        self.all_encoder_layers[idx][0] for idx in [-1, -2, -3, -4]
-      ]
-      self.last_four_cls_hidden = tf.concat(lst, axis=1)
 
   def get_pooled_output(self):
     return self.pooled_output
@@ -253,15 +244,6 @@ class BertModel(object):
       to the final hidden of the transformer encoder.
     """
     return self.sequence_output
-
-  def get_last_hidden(self):
-    return self.last_hidden
-
-  def get_last_four_hidden(self):
-    return self.last_four_hidden
-
-  def get_last_four_cls_hidden(self):
-    return self.last_four_cls_hidden
 
   def get_all_encoder_layers(self):
     return self.all_encoder_layers
@@ -281,20 +263,20 @@ class BertModel(object):
     return self.embedding_table
 
 
-def gelu(x):
+def gelu(input_tensor):
   """Gaussian Error Linear Unit.
 
   This is a smoother version of the RELU.
   Original paper: https://arxiv.org/abs/1606.08415
+
   Args:
-    x: float Tensor to perform activation.
+    input_tensor: float Tensor to perform activation.
 
   Returns:
-    `x` with the GELU activation applied.
+    `input_tensor` with the GELU activation applied.
   """
-  cdf = 0.5 * (1.0 + tf.tanh(
-      (np.sqrt(2 / np.pi) * (x + 0.044715 * tf.pow(x, 3)))))
-  return x * cdf
+  cdf = 0.5 * (1.0 + tf.erf(input_tensor / tf.sqrt(2.0)))
+  return input_tensor * cdf
 
 
 def get_activation(activation_string):
@@ -413,7 +395,8 @@ def embedding_lookup(input_ids,
     initializer_range: float. Embedding initialization range.
     word_embedding_name: string. Name of the embedding table.
     use_one_hot_embeddings: bool. If True, use one-hot method for word
-      embeddings. If False, use `tf.gather()`.
+      embeddings. If False, use `tf.nn.embedding_lookup()`. One hot is better
+      for TPUs.
 
   Returns:
     float Tensor of shape [batch_size, seq_length, embedding_size].
@@ -431,12 +414,12 @@ def embedding_lookup(input_ids,
       shape=[vocab_size, embedding_size],
       initializer=create_initializer(initializer_range))
 
-  flat_input_ids = tf.reshape(input_ids, [-1])
   if use_one_hot_embeddings:
+    flat_input_ids = tf.reshape(input_ids, [-1])
     one_hot_input_ids = tf.one_hot(flat_input_ids, depth=vocab_size)
     output = tf.matmul(one_hot_input_ids, embedding_table)
   else:
-    output = tf.gather(embedding_table, flat_input_ids)
+    output = tf.nn.embedding_lookup(embedding_table, input_ids)
 
   input_shape = get_shape_list(input_ids)
 
