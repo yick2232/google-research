@@ -23,3 +23,4 @@ bam/.idea/
 bam/glue_data/
 bam/models/
 bam/pretrained_models
+bam/logs
