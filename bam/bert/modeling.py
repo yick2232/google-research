@@ -122,7 +122,7 @@ class CnnModel(object):
       use_one_hot_embeddings
     """
     config = copy.deepcopy(config)
-    config.filter_sizes = config.filter_sizes.split(",")
+    config.filter_sizes = [int(size) for size in config.filter_sizes.split(",")]
 
     input_shape = get_shape_list(input_ids, expected_rank=2)
     seq_length = input_shape[1]
