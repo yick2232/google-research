@@ -486,7 +486,7 @@ def embedding_lookup(input_ids,
   #
   # If the input is a 2D tensor of shape [batch_size, seq_length], we
   # reshape to [batch_size, seq_length, 1].
-  if input_ids.shape.ndims == 2:
+  if input_ids.shape.ndims == 3:
     input_ids = tf.expand_dims(input_ids, axis=[-1])
 
   embedding_table = tf.get_variable(
