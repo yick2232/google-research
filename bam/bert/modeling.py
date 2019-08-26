@@ -122,16 +122,10 @@ class CnnModel(object):
       use_one_hot_embeddings
     """
     config = copy.deepcopy(config)
-    if not is_training:
-      config.hidden_dropout_prob = 0.0
-      config.attention_probs_dropout_prob = 0.0
+    config.num_filters = config.num_filters.split(",")
 
     input_shape = get_shape_list(input_ids, expected_rank=2)
-    batch_size = input_shape[0]
     seq_length = input_shape[1]
-
-    # Keeping track of l2 regularization loss (optional)
-    l2_loss = tf.constant(0.0)
 
     with tf.variable_scope("embeddings"):
       # Perform embedding lookup on the word ids.
