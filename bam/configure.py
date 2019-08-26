@@ -141,6 +141,12 @@ class Config(object):
     else:
       self.distill_inputs = None
 
+    # cnn config
+    self.filter_sizes = [1,2,3]
+    self.embedding_size = 256
+    self.num_filters = 64
+
+
   def update(self, kwargs):
     for k, v in kwargs.items():
       if k not in self.__dict__:

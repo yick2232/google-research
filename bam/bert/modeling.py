@@ -104,6 +104,92 @@ class BertConfig(object):
     return json.dumps(self.to_dict(), indent=2, sort_keys=True) + "\n"
 
 
+class CnnModel(object):
+  """CNN model
+
+  """
+
+  def __init__(self,
+               config,
+               is_training,
+               input_ids,
+               use_one_hot_embeddings=True):
+    """Constructor for CnnModel.
+    Args:
+      config
+      is_training
+      input_ids
+      use_one_hot_embeddings
+    """
+    config = copy.deepcopy(config)
+    if not is_training:
+      config.hidden_dropout_prob = 0.0
+      config.attention_probs_dropout_prob = 0.0
+
+    input_shape = get_shape_list(input_ids, expected_rank=2)
+    batch_size = input_shape[0]
+    seq_length = input_shape[1]
+
+    # Keeping track of l2 regularization loss (optional)
+    l2_loss = tf.constant(0.0)
+
+    with tf.variable_scope("embeddings"):
+      # Perform embedding lookup on the word ids.
+      (self.embedding_output, self.embedding_table) = embedding_lookup(
+          input_ids=input_ids,
+          vocab_size=config.vocab_size,
+          embedding_size=config.embedding_size,
+          initializer_range=config.initializer_range,
+          word_embedding_name="word_embeddings",
+          use_one_hot_embeddings=use_one_hot_embeddings)
+
+    with tf.variable_scope("cnn"):
+      # Create a convolution + maxpool layer for each filter size
+      pooled_outputs = []
+      for i, filter_size in enumerate(config.filter_sizes):
+        with tf.name_scope("conv-maxpool-%s" % filter_size):
+          # Convolution Layer
+          filter_shape = [filter_size, config.embedding_size, 1, config.num_filters]
+          W = tf.Variable(tf.truncated_normal(filter_shape, stddev=0.1), name="W")
+          b = tf.Variable(tf.constant(0.1, shape=[config.num_filters]), name="b")
+          conv = tf.nn.conv2d(
+              self.embedding_output,
+              W,
+              strides=[1, 1, 1, 1],
+              padding="VALID",
+              name="conv")
+          # Apply nonlinearity
+          h = tf.nn.relu(tf.nn.bias_add(conv, b), name="relu")
+          # Maxpooling over the outputs
+          pooled = tf.nn.max_pool(
+              h,
+              ksize=[1, seq_length - filter_size + 1, 1, 1],
+              strides=[1, 1, 1, 1],
+              padding='VALID',
+              name="pool")
+          pooled_outputs.append(pooled)
+      # Combine all the pooled features
+      num_filters_total = config.num_filters * len(config.filter_sizes)
+      self.h_pool = tf.concat(pooled_outputs, 3)
+      self.pooled_output = tf.reshape(self.h_pool, [-1, num_filters_total])
+
+  def get_pooled_output(self):
+    return self.pooled_output
+
+  def get_embedding_output(self):
+    """Gets output of the embedding lookup (i.e., input to the transformer).
+
+    Returns:
+      float Tensor of shape [batch_size, seq_length, hidden_size] corresponding
+      to the output of the embedding layer, after summing the word
+      embeddings with the positional embeddings and the token type embeddings,
+      then performing layer normalization. This is the input to the transformer.
+    """
+    return self.embedding_output
+
+  def get_embedding_table(self):
+    return self.embedding_table
+
 class BertModel(object):
   """BERT model ("Bidirectional Encoder Representations from Transformers").
 

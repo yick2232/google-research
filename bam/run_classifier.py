@@ -47,13 +47,19 @@ class MultitaskModel(object):
       bert_config.hidden_size = 144
     assert config.max_seq_length <= bert_config.max_position_embeddings
     with tf.variable_scope(tf.get_variable_scope(), reuse=tf.AUTO_REUSE):
-      bert_model = modeling.BertModel(
+      #bert_model = modeling.BertModel(
+      #    config=bert_config,
+      #    is_training=is_training,
+      #    input_ids=features["input_ids"],
+      #    input_mask=features["input_mask"],
+      #    token_type_ids=features["segment_ids"],
+      #    use_one_hot_embeddings=config.use_tpu)
+      cnn_model = modeling.CnnModel(
           config=bert_config,
           is_training=is_training,
           input_ids=features["input_ids"],
-          input_mask=features["input_mask"],
-          token_type_ids=features["segment_ids"],
-          use_one_hot_embeddings=config.use_tpu)
+          use_one_hot_embeddings=config.use_tpu
+      )
     percent_done = (tf.to_float(tf.train.get_or_create_global_step()) /
                     tf.to_float(num_train_steps))
 
@@ -62,14 +68,14 @@ class MultitaskModel(object):
     losses = []
     if len(tasks) == 1:
       task_losses, task_outputs = tasks[0].get_prediction_module(
-          bert_model, features, is_training, percent_done)
+          cnn_model, features, is_training, percent_done)
       losses.append(task_losses * task_weights[tasks[0].name])
       self.outputs[tasks[0].name] = task_outputs
     else:
       for task in tasks:
         with tf.variable_scope("task_specific/" + task.name):
           task_losses, task_outputs = task.get_prediction_module(
-              bert_model, features, is_training, percent_done)
+              cnn_model, features, is_training, percent_done)
           losses.append(task_losses * task_weights[task.name])
           self.outputs[task.name] = task_outputs
 
