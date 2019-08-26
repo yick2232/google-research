@@ -279,7 +279,7 @@ class ClassificationTask(SingleOutputTask):
     reprs = bert_model.get_pooled_output()
 
     if is_training:
-      reprs = tf.nn.dropout(reprs, keep_prob=0.9)
+      reprs = tf.nn.dropout(reprs, keep_prob=0.5)
 
     hidden_size = reprs.shape[-1].value
     output_weights = tf.get_variable(
@@ -289,14 +289,11 @@ class ClassificationTask(SingleOutputTask):
         "output_bias", [num_labels], initializer=tf.zeros_initializer())
 
     with tf.variable_scope("loss"):
-      if is_training:
-        # I.e., 0.1 dropout
-        reprs = tf.nn.dropout(reprs, keep_prob=0.9)
       logits = tf.matmul(reprs, output_weights, transpose_b=True)
       logits = tf.nn.bias_add(logits, output_bias)
     #logits = tf.layers.dense(reprs, num_labels)
-    # probabilities = tf.nn.softmax(logits, axis=-1)
-    log_probs = tf.nn.log_softmax(logits, axis=-1)
+    probabilities = tf.nn.softmax(logits, axis=-1)
+    # log_probs = tf.nn.log_softmax(logits, axis=-1)
     #teacher_logits = features[self.name + "_logits"]
     #losses = tf.losses.mean_squared_error(teacher_logits, logits)
 
@@ -314,7 +311,7 @@ class ClassificationTask(SingleOutputTask):
     else:
       labels = tf.one_hot(label_ids, depth=num_labels, dtype=tf.float32)
 
-    losses = -tf.reduce_sum(labels * log_probs, axis=-1)
+    losses = tf.reduce_sum(labels * tf.log(labels/probabilities), axis=-1)
 
     outputs = dict(
         loss=losses,
