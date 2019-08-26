@@ -72,8 +72,9 @@ class Config(object):
     self.dataset_multiples = True  # include multiple copies of small datasets
 
     # training
-    self.save_checkpoints_steps = 2000
-    self.iterations_per_loop = 2000
+    self.save_checkpoints_steps = 200
+    self.iterations_per_loop = 200
+    self.keep_checkpoint_max = 50
     self.use_tfrecords_if_existing = True  # don't make tfrecords and write them
                                            # to disk if existing ones are found
 
@@ -145,6 +146,8 @@ class Config(object):
     self.filter_sizes = [1,2,3]
     self.embedding_size = 256
     self.num_filters = 64
+
+
 
 
   def update(self, kwargs):

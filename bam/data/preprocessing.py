@@ -112,7 +112,7 @@ class Preprocessor(object):
     input_fn = self._input_fn_builder(tfrecords_path, is_training)
     if is_training:
       #steps = int(n_examples // batch_size * self._config.num_train_epochs)
-      steps = int(self._config.save_checkpoints_steps * 30)
+      steps = int(self._config.save_checkpoints_steps * self._config.keep_checkpoint_maxg)
     else:
       steps = n_examples // batch_size
 
