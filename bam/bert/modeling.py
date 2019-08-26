@@ -136,6 +136,7 @@ class CnnModel(object):
           initializer_range=config.initializer_range,
           word_embedding_name="word_embeddings",
           use_one_hot_embeddings=use_one_hot_embeddings)
+      self.embedding_expended_output = tf.expand_dims(self.embedding_output, -1)
 
     with tf.variable_scope("cnn"):
       # Create a convolution + maxpool layer for each filter size
@@ -147,7 +148,7 @@ class CnnModel(object):
           W = tf.Variable(tf.truncated_normal(filter_shape, stddev=0.1), name="W")
           b = tf.Variable(tf.constant(0.1, shape=[config.num_filters]), name="b")
           conv = tf.nn.conv2d(
-              self.embedding_output,
+              self.embedding_expended_output,
               W,
               strides=[1, 1, 1, 1],
               padding="VALID",
@@ -486,7 +487,7 @@ def embedding_lookup(input_ids,
   #
   # If the input is a 2D tensor of shape [batch_size, seq_length], we
   # reshape to [batch_size, seq_length, 1].
-  if input_ids.shape.ndims == 3:
+  if input_ids.shape.ndims == 2:
     input_ids = tf.expand_dims(input_ids, axis=[-1])
 
   embedding_table = tf.get_variable(
