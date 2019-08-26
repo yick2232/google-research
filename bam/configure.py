@@ -47,7 +47,7 @@ class Config(object):
     self.do_lower_case = True
     self.learning_rate = 1e-4
     self.weight_decay_rate = 0.01
-    self.lr_decay = 0.9  # if > 0, the learning rate for a particular layer is
+    self.lr_decay = 0  # if > 0, the learning rate for a particular layer is
                          # learning_rate * lr_decay^(depth - max_depth)
                          # i.e., shallower layers have lower learning rates
     self.num_train_epochs = 6.0
