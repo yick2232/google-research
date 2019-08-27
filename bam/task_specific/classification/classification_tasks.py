@@ -313,8 +313,10 @@ class ClassificationTask(SingleOutputTask):
         losses = ((soft_losses * percent_done) +
                   (hard_losses * (1 - percent_done)))
       else:
-        losses = ((soft_losses * (1 - self.config.distill_weight)) +
-                  (hard_losses * self.config.distill_weight))
+        losses = (
+            (soft_losses * self.config.distill_weight) +
+            (hard_losses * (1 - self.config.distill_weight))
+        )
     else:
       losses = tf.reduce_sum(labels * teacher_labels)
 

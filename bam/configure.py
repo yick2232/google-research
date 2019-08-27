@@ -57,7 +57,7 @@ class Config(object):
     self.distill = False  # whether to do knowledge distillation
     self.teachers = {}  # {task: the model providing distill targets}
     self.teacher_annealing = True # whether to do teacher annealing
-    self.distill_weight = 1  # if no teacher annealing, how much weight to
+    self.distill_weight = 0.8  # if no teacher annealing, how much weight to
                                # put on distill targets vs gold-standard label
 
     # sizing
