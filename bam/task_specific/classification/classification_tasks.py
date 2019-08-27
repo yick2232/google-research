@@ -142,9 +142,7 @@ class SingleOutputTask(task.Task):
         "task_id": self.config.task_names.index(self.name),
         self.name + "_eid": eid,
     }
-    self._add_features(features, example,
-                       None if self._distill_inputs is None else
-                       self._get_distill_inputs(eid))
+    self._add_features(features, example, self._get_distill_inputs(eid))
     return features
 
   def _load_glue(self, lines, split, text_a_loc, text_b_loc, label_loc,
