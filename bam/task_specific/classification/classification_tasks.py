@@ -50,15 +50,18 @@ class SingleOutputTask(task.Task):
     super(SingleOutputTask, self).__init__(config, name)
     self._tokenizer = tokenizer
     self._distill_inputs = None
-    self._eid = None
-    self._bucket_size = None
+    self._bucket_idx = -1
+    self._bucket_size = 200000
 
   def _get_distill_inputs(self, eid):
-    if self._eid is None or not (self._eid - self._bucket_size <= eid < self._eid):
-      self._eid = eid - eid % self._bucket_size + self._bucket_size
+    if eid >= (self._bucket_idx + 1) * self._bucket_size:
       self._distill_inputs = utils.load_pickle(
           self.config.distill_inputs(self.name, self._eid)
       )
+      utils.log(
+          "load: {}".format(self.config.distill_inputs(self.name, self._eid))
+      )
+      self._bucket_idx += 1
     return self._distill_inputs[eid % self._bucket_size]["xd_logits"]
 
   def featurize(self, example, is_training):
