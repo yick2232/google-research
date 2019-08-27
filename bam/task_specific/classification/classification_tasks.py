@@ -56,10 +56,10 @@ class SingleOutputTask(task.Task):
   def _get_distill_inputs(self, eid):
     if eid >= (self._bucket_idx + 1) * self._bucket_size:
       self._distill_inputs = utils.load_pickle(
-          self.config.distill_inputs(self.name, self._eid)
+          self.config.distill_inputs(self.name, eid)
       )
       utils.log(
-          "load: {}".format(self.config.distill_inputs(self.name, self._eid))
+          "load: {}".format(self.config.distill_inputs(self.name, eid))
       )
       self._bucket_idx += 1
     return self._distill_inputs[eid % self._bucket_size]["xd_logits"]
