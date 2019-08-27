@@ -62,7 +62,9 @@ class SingleOutputTask(task.Task):
           "load: {}".format(self.config.distill_inputs(self.name, eid + self._bucket_size))
       )
       self._bucket_idx += 1
-    return self._distill_inputs[eid % self._bucket_size]["xd_logits"]
+    item = self._distill_inputs[eid % self._bucket_size]
+    utils.log("eid: {}, {}".format(eid, item["xd_eid"]))
+    return item["xd_logits"]
 
   def featurize(self, example, is_training):
     """Turn an InputExample into a dict of features."""

@@ -100,8 +100,8 @@ class Preprocessor(object):
         examples += task_examples
       while len(examples) % batch_size != 0:
         examples.append(PaddingInputExample())
-      if is_training:
-        random.shuffle(examples)
+      #if is_training:
+      #  random.shuffle(examples)
       n_examples = len(examples)
       assert n_examples % batch_size == 0
       utils.mkdir(tfrecords_path.rsplit("/", 1)[0])
