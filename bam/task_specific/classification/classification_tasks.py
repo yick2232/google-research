@@ -293,25 +293,30 @@ class ClassificationTask(SingleOutputTask):
       logits = tf.nn.bias_add(logits, output_bias)
     #logits = tf.layers.dense(reprs, num_labels)
     probabilities = tf.nn.softmax(logits, axis=-1)
+    label_ids = tf.argmax(logits, axis=-1)
+    labels = tf.one_hot(label_ids, depth=num_labels, dtype=tf.float32)
     # log_probs = tf.nn.log_softmax(logits, axis=-1)
     #teacher_logits = features[self.name + "_logits"]
     #losses = tf.losses.mean_squared_error(teacher_logits, logits)
 
-    label_ids = features[self.name + "_label_ids"]
+    teacher_probabilities = tf.nn.softmax(features[self.name + "_logits"] / 1.0)
+    teacher_label_ids = features[self.name + "_label_ids"]
+    teacher_labels = tf.one_hot(teacher_label_ids, depth=num_labels, dtype=tf.float32)
+
     if self.config.distill:
-      teacher_labels = tf.nn.softmax(features[self.name + "_logits"] / 1.0)
-      true_labels = tf.one_hot(label_ids, depth=num_labels, dtype=tf.float32)
+      # L = α * L_soft + (1 - α) * L_hard
+
+      soft_losses = tf.reduce_sum(teacher_probabilities * tf.log(teacher_probabilities/probabilities))
+      hard_losses = -tf.reduce_sum(teacher_labels * tf.log(probabilities))
 
       if self.config.teacher_annealing:
-        labels = ((true_labels * percent_done) +
-                  (teacher_labels * (1 - percent_done)))
+        losses = ((soft_losses * percent_done) +
+                  (hard_losses * (1 - percent_done)))
       else:
-        labels = ((true_labels * (1 - self.config.distill_weight)) +
-                  (teacher_labels * self.config.distill_weight))
+        losses = ((soft_losses * (1 - self.config.distill_weight)) +
+                  (hard_losses * self.config.distill_weight))
     else:
-      labels = tf.one_hot(label_ids, depth=num_labels, dtype=tf.float32)
-
-    losses = tf.reduce_sum(labels * tf.log(labels/probabilities), axis=-1)
+      losses = tf.reduce_sum(labels * teacher_labels)
 
     outputs = dict(
         loss=losses,

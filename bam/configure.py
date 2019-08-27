@@ -56,7 +56,7 @@ class Config(object):
     # knowledge distillation;
     self.distill = False  # whether to do knowledge distillation
     self.teachers = {}  # {task: the model providing distill targets}
-    self.teacher_annealing = False # whether to do teacher annealing
+    self.teacher_annealing = True # whether to do teacher annealing
     self.distill_weight = 1  # if no teacher annealing, how much weight to
                                # put on distill targets vs gold-standard label
 
@@ -72,9 +72,9 @@ class Config(object):
     self.dataset_multiples = True  # include multiple copies of small datasets
 
     # training
-    self.save_checkpoints_steps = 200
-    self.iterations_per_loop = 200
-    self.keep_checkpoint_max = 50
+    self.save_checkpoints_steps = 1000
+    self.iterations_per_loop = 1000
+    self.keep_checkpoint_max = 20
     self.use_tfrecords_if_existing = True  # don't make tfrecords and write them
                                            # to disk if existing ones are found
 
