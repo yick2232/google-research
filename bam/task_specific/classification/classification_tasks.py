@@ -50,20 +50,29 @@ class SingleOutputTask(task.Task):
     super(SingleOutputTask, self).__init__(config, name)
     self._tokenizer = tokenizer
     self._distill_inputs = None
-    self._bucket_idx = -1
-    self._bucket_size = 200000
+    self._flags = [flag for flag in range(200000, 6000000, 200000)]
+    self._flags.append(5892224)
+    self._fidx = 0
+    self._idx = 0
 
   def _get_distill_inputs(self, eid):
-    if eid >= (self._bucket_idx + 1) * self._bucket_size:
+    if self._distill_inputs is None:
       self._distill_inputs = utils.load_pickle(
-          self.config.distill_inputs(self.name, eid + self._bucket_size)
+          self.config.distill_inputs(self.name, self._flags[self._fidx])
       )
-      utils.log(
-          "load: {}".format(self.config.distill_inputs(self.name, eid + self._bucket_size))
+      self._fidx += 1
+      self._idx = 0
+    elif eid > self._distill_inputs[-1]["xd_eid"]:
+      self._distill_inputs = utils.load_pickle(
+          self.config.distill_inputs(self.name, self._flags[self._fidx])
       )
-      self._bucket_idx += 1
-    item = self._distill_inputs[eid % self._bucket_size]
-    utils.log("eid: {}, {}".format(eid, item["xd_eid"]))
+      self._fidx += 1
+      self._idx = 0
+
+    item = self._distill_inputs[self._idx]
+    assert eid == item["xd_eid"]
+    self._idx += 1
+
     return item["xd_logits"]
 
   def featurize(self, example, is_training):
